@@ -18,12 +18,12 @@ def main():
 
     coins_list = ub.get_krw_tickers()
 
-    # Current wallet state [buy_price, max_price]
+    # Current wallet state, store buy price
     activated_coin = {}
 
     while True:
         for coin in coins_list:
-            time.sleep(0.055)
+            time.sleep(0.07)
             df = ub.get_ohlcv(coin)
 
             if df is None:
@@ -36,15 +36,13 @@ def main():
             current_price = current_data['close'].values[0]
             
             if coin in activated_coin.keys():
-                activated_coin[coin][1] = max(activated_coin[coin][1], current_price)
-
                 # sonjeol
-                if current_price < activated_coin[coin][0] * 0.95:
+                if current_price < activated_coin[coin] * 0.95:
                     order = ub.sell_coin(coin)
-                    logger.info(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S') + f' [SELL] coin : {coin}, upbit : {current_price}, prder : {order}')
+                    logger.info(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S') + f' [SELL] coin : {coin}, upbit : {current_price}, order : {order}')
 
-                # sell coin when price is lower than 20% of maximum price 
-                elif current_price < activated_coin[coin][0] * 0.8:
+                # sell coin when price is lower than MA10 
+                elif current_price < past_data['close'][-10:].mean():
                     order = ub.sell_coin(coin)
                     logger.info(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S') + f' [SELL] coin : {coin}, upbit : {current_price}, order : {order}')
 
@@ -53,8 +51,10 @@ def main():
                     # buy coin from upbit
                     order = ub.buy_coin(coin)
                     logger.info(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S') + f' [BUY] coin : {coin}, upbit : {current_price}, order : {order}')
-                    activated_coin[coin] = [current_price, current_price]
+                    activated_coin[coin] = current_price
 
 
 if __name__ == '__main__':
-    main()
+    # main()
+    df = ub.get_ohlcv("KRW-BTC")
+    print(df['close'][-10:].mean())
