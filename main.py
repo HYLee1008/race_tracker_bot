@@ -50,11 +50,10 @@ def main():
 
             else:
                 if past_data['volume'].max() * 4 < current_data['volume'].values[0] and past_data['high'].max() < current_price:
-                    if not is_activated:
-                        # buy coin from upbit
-                        ub.buy_coin(coin, current_price)
-                        logger.info(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S') + f' [BUY] coin : {coin}, upbit : {current_price}')
-                        activated_coin[coin] = [current_price, current_price]
+                    # buy coin from upbit
+                    ub.buy_coin(coin, current_price)
+                    logger.info(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S') + f' [BUY] coin : {coin}, upbit : {current_price}')
+                    activated_coin[coin] = [current_price, current_price]
 
 
 if __name__ == '__main__':
