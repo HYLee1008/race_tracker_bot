@@ -40,11 +40,13 @@ def main():
                 if current_price < activated_coin[coin] * 0.95:
                     order = ub.sell_coin(coin)
                     logger.info(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S') + f' [SELL] coin : {coin}, upbit : {current_price}, order : {order}')
+                    activated_coin.pop(coin, None)
 
                 # sell coin when price is lower than MA10 
                 elif current_price < past_data['close'][-10:].mean():
                     order = ub.sell_coin(coin)
                     logger.info(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S') + f' [SELL] coin : {coin}, upbit : {current_price}, order : {order}')
+                    activated_coin.pop(coin, None)
 
             else:
                 if past_data['volume'].max() * 3 < current_data['volume'].values[0] and past_data['high'].max() < current_price:
