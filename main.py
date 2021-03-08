@@ -40,19 +40,19 @@ def main():
 
                 # sonjeol
                 if current_price < activated_coin[coin][0] * 0.95:
-                    ub.sell_coin(coin)
-                    logger.info(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S') + f' [SELL] coin : {coin}, upbit : {current_price}')
+                    order = ub.sell_coin(coin)
+                    logger.info(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S') + f' [SELL] coin : {coin}, upbit : {current_price}, prder : {order}')
 
-                # sell coin when price is lower than 10% of maximum price 
-                elif current_price < activated_coin[coin][0] * 0.9:
-                    ub.sell_coin(coin)
-                    logger.info(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S') + f' [SELL] coin : {coin}, upbit : {current_price}')
+                # sell coin when price is lower than 20% of maximum price 
+                elif current_price < activated_coin[coin][0] * 0.8:
+                    order = ub.sell_coin(coin)
+                    logger.info(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S') + f' [SELL] coin : {coin}, upbit : {current_price}, order : {order}')
 
             else:
-                if past_data['volume'].max() * 4 < current_data['volume'].values[0] and past_data['high'].max() < current_price:
+                if past_data['volume'].max() * 3 < current_data['volume'].values[0] and past_data['high'].max() < current_price:
                     # buy coin from upbit
-                    ub.buy_coin(coin, current_price)
-                    logger.info(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S') + f' [BUY] coin : {coin}, upbit : {current_price}')
+                    order = ub.buy_coin(coin)
+                    logger.info(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S') + f' [BUY] coin : {coin}, upbit : {current_price}, order : {order}')
                     activated_coin[coin] = [current_price, current_price]
 
 

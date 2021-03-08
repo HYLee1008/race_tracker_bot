@@ -20,31 +20,17 @@ def get_ohlcv(coin):
 
 
 # buy coin
-def buy_coin(coin, price):
-    wallet = pyupbit.Upbit(access_key, secret_key)
+def buy_coin(coin):
+    try:
+        wallet = pyupbit.Upbit(access_key, secret_key)
 
-    krw = wallet.get_balance('KRW')
-    orderbook = pyupbit.get_orderbook(coin)
+        krw = wallet.get_balance('KRW')
 
+        order = wallet.buy_market_order(coin, krw * 0.5)
 
-    sell_price = orderbook[0]['orderbook_units'][0]['ask_price']
-    sell_quantity = orderbook[0]['orderbook_units'][0]['bid_size']
-
-    # difference = 100 * abs(sell_price - price) / min(sell_price, price)
-    # if difference > 0.5:
-    #     print(f"{coin} Too high difference : {price} / {sell_price}")
-    #     return False
-
-    # if krw > sell_price * sell_quantity:
-    #     print(f"{coin} Not enough coin : {krw} {sell_price} {sell_price * sell_quantity}")
-    #     return False
-
-    unit = (krw / float(sell_price)) * 0.5
-
-    order = wallet.buy_market_order(coin, unit)
-
-    return order
-
+        return order
+    except:
+        return False
 
 # sell coin
 def sell_coin(coin):
@@ -63,6 +49,5 @@ def sell_coin(coin):
 if __name__ == '__main__':
     wallet = pyupbit.Upbit(access_key, secret_key)
 
-    krw = wallet.get_balance('KRW')
-    print(krw)
-    print('good')
+    order = sell_coin("KRW-BTC")
+    print(order)
