@@ -13,4 +13,4 @@ History
 
 Description
 ----------
-rtb version 1
+rtb version 1. -52% 찍고 눈물을 머금고 폐기..
