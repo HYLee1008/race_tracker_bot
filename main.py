@@ -6,9 +6,10 @@ import time
 from src import official_api as ub
 from src.unofficial_api import get_ohlcv
 
+lock = threading.Lock()
 
-def threading_func(coin, logger, activated_coin, kernel_size):
-    print(coin)
+
+def threading_func(coin, logger, kernel_size):
     data = get_ohlcv(coin, kernel_size)
 
     if data is None:
@@ -20,6 +21,7 @@ def threading_func(coin, logger, activated_coin, kernel_size):
 
     current_price = current_data['tradePrice']
 
+    lock.acquire()
     if coin in activated_coin.keys():
         # sonjeol
         if current_price < activated_coin[coin] * 0.95:
@@ -43,6 +45,7 @@ def threading_func(coin, logger, activated_coin, kernel_size):
             logger.info(datetime.datetime.now().strftime(
                 '%Y-%m-%d %H:%M:%S') + f' [BUY] coin : {coin}, upbit : {current_price}, order : {order}')
             activated_coin[coin] = current_price
+    lock.release()
 
 
 def operation_helper(data, target, operation):
@@ -79,10 +82,11 @@ def main():
     global activated_coin
     activated_coin = {}
 
+
     while True:
         start_time = time.time()
         for coin in coins_list:
-            t = threading.Thread(target=threading_func, args=(coin, logger, activated_coin, kernel_size))
+            t = threading.Thread(target=threading_func, args=(coin, logger, kernel_size))
             t.start()
         time_taken = time.time() - start_time
         print(f'time_taken : {time_taken}')
