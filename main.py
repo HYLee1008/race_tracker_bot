@@ -1,8 +1,48 @@
 import logging
 import datetime
+import threading
+import time
 
 from src import official_api as ub
 from src.unofficial_api import get_ohlcv
+
+
+def threading_func(coin, logger, activated_coin, kernel_size):
+    print(coin)
+    data = get_ohlcv(coin, kernel_size)
+
+    if data is None:
+        logger.info(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S') + f' : [Network Error] upbit network error')
+        return
+
+    past_data = data[1:]
+    current_data = data[0]
+
+    current_price = current_data['tradePrice']
+
+    if coin in activated_coin.keys():
+        # sonjeol
+        if current_price < activated_coin[coin] * 0.95:
+            order = ub.sell_coin(coin)
+            logger.info(datetime.datetime.now().strftime(
+                '%Y-%m-%d %H:%M:%S') + f' [SELL] coin : {coin}, upbit : {current_price}, order : {order}')
+            activated_coin.pop(coin, None)
+
+        # sell coin when price is lower than MA10
+        elif current_price < operation_helper(past_data[:10], 'tradePrice', 'mean'):
+            order = ub.sell_coin(coin)
+            logger.info(datetime.datetime.now().strftime(
+                '%Y-%m-%d %H:%M:%S') + f' [SELL] coin : {coin}, upbit : {current_price}, order : {order}')
+            activated_coin.pop(coin, None)
+
+    else:
+        if operation_helper(past_data, 'candleAccTradeVolume', 'max') * 3 < current_data[
+            'candleAccTradeVolume'] and operation_helper(past_data, 'tradePrice', 'max') < current_price:
+            # buy coin from upbit
+            order = ub.buy_coin(coin)
+            logger.info(datetime.datetime.now().strftime(
+                '%Y-%m-%d %H:%M:%S') + f' [BUY] coin : {coin}, upbit : {current_price}, order : {order}')
+            activated_coin[coin] = current_price
 
 
 def operation_helper(data, target, operation):
@@ -21,7 +61,7 @@ def operation_helper(data, target, operation):
 
 def main():
     # How long?
-    kernel_size = 10
+    kernel_size = 200
 
     # For logging file
     log_file_name = "logbook.log"
@@ -36,40 +76,16 @@ def main():
     coins_list = ub.get_krw_tickers()
 
     # Current wallet state, store buy price
+    global activated_coin
     activated_coin = {}
 
     while True:
+        start_time = time.time()
         for coin in coins_list:
-            data = get_ohlcv(coin, kernel_size + 1)
-
-            if data is None:
-                logger.info(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S') + f' : [Network Error] upbit network error')
-                continue
-
-            past_data = data[1:]
-            current_data = data[0]
-
-            current_price = current_data['tradePrice']
-            
-            if coin in activated_coin.keys():
-                # sonjeol
-                if current_price < activated_coin[coin] * 0.95:
-                    order = ub.sell_coin(coin)
-                    logger.info(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S') + f' [SELL] coin : {coin}, upbit : {current_price}, order : {order}')
-                    activated_coin.pop(coin, None)
-
-                # sell coin when price is lower than MA10 
-                elif current_price < operation_helper(past_data, 'tradePrice', 'mean'):
-                    order = ub.sell_coin(coin)
-                    logger.info(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S') + f' [SELL] coin : {coin}, upbit : {current_price}, order : {order}')
-                    activated_coin.pop(coin, None)
-
-            else:
-                if operation_helper(past_data, 'candleAccTradeVolume', 'max') * 3 < current_data['candleAccTradeVolume'] and operation_helper(past_data, 'tradePrice', 'max') < current_price:
-                    # buy coin from upbit
-                    order = ub.buy_coin(coin)
-                    logger.info(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S') + f' [BUY] coin : {coin}, upbit : {current_price}, order : {order}')
-                    activated_coin[coin] = current_price
+            t = threading.Thread(target=threading_func, args=(coin, logger, activated_coin, kernel_size))
+            t.start()
+        time_taken = time.time() - start_time
+        print(f'time_taken : {time_taken}')
 
 
 
