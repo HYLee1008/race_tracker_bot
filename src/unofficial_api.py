@@ -3,8 +3,24 @@ import pandas as pd
 import re
 
 import requests
+import socket
+
+from requests.packages.urllib3.connection import HTTPConnection
 from requests.adapters import HTTPAdapter
+from requests.adapters import PoolManager
 from urllib3.util.retry import Retry
+
+
+class SockOpsAdapter(HTTPAdapter):
+  def __init__(self, options, **kwargs):
+    self.options = options
+    super(SockOpsAdapter, self).__init__(**kwargs)
+
+  def init_poolmanager(self, connections, maxsize, block=False):
+    self.poolmanager = PoolManager(num_pools=connections,
+                                   maxsize=maxsize,
+                                   block=block,
+                                   socket_options=self.options)
 
 
 def _parse_remaining_req(remaining_req):
@@ -28,6 +44,10 @@ def requests_retry_session(retries=5, backoff_factor=0.3, status_forcelist=(500,
     :param session:
     :return:
     """
+    options = HTTPConnection.default_socket_options + [
+        (socket.SOL_SOCKET, socket.SO_REUSEADDR, 1),
+    ]
+
     s = session or requests.Session()
     retry = Retry(
         total=retries,
@@ -36,8 +56,10 @@ def requests_retry_session(retries=5, backoff_factor=0.3, status_forcelist=(500,
         backoff_factor=backoff_factor,
         status_forcelist=status_forcelist)
     adapter = HTTPAdapter(max_retries=retry)
-    s.mount('http://', adapter)
-    s.mount('https://', adapter)
+    # s.mount('http://', adapter)
+    # s.mount('https://', adapter)
+    s.mount('http://', SockOpsAdapter(options))
+    s.mount('https://', SockOpsAdapter(options))
     return s
 
 

@@ -10,42 +10,47 @@ lock = threading.Lock()
 
 
 def threading_func(coin, logger, kernel_size):
-    data = get_ohlcv(coin, kernel_size)
+    is_buy = False
 
-    if data is None:
-        logger.info(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S') + f' : [Network Error] upbit network error')
-        return
+    while True:
+        # start = time.time()
 
-    past_data = data[1:]
-    current_data = data[0]
+        data = get_ohlcv(coin, kernel_size)
 
-    current_price = current_data['tradePrice']
+        if data is None:
+            continue
 
-    lock.acquire()
-    if coin in activated_coin.keys():
-        # sonjeol
-        if current_price < activated_coin[coin] * 0.95:
-            order = ub.sell_coin(coin)
-            logger.info(datetime.datetime.now().strftime(
-                '%Y-%m-%d %H:%M:%S') + f' [SELL] coin : {coin}, upbit : {current_price}, order : {order}')
-            activated_coin.pop(coin, None)
+        past_data = data[1:]
+        current_data = data[0]
 
-        # sell coin when price is lower than MA10
-        elif current_price < operation_helper(past_data[:10], 'tradePrice', 'mean'):
-            order = ub.sell_coin(coin)
-            logger.info(datetime.datetime.now().strftime(
-                '%Y-%m-%d %H:%M:%S') + f' [SELL] coin : {coin}, upbit : {current_price}, order : {order}')
-            activated_coin.pop(coin, None)
+        current_price = current_data['tradePrice']
 
-    else:
-        if operation_helper(past_data, 'candleAccTradeVolume', 'max') * 3 < current_data[
-            'candleAccTradeVolume'] and operation_helper(past_data, 'tradePrice', 'max') < current_price:
-            # buy coin from upbit
-            order = ub.buy_coin(coin)
-            logger.info(datetime.datetime.now().strftime(
-                '%Y-%m-%d %H:%M:%S') + f' [BUY] coin : {coin}, upbit : {current_price}, order : {order}')
-            activated_coin[coin] = current_price
-    lock.release()
+        if is_buy:
+            # sonjeol
+            if current_price < activated_coin[coin] * 0.95:
+                order = ub.sell_coin(coin)
+                logger.info(datetime.datetime.now().strftime(
+                    '%Y-%m-%d %H:%M:%S') + f' [SELL] coin : {coin}, upbit : {current_price}, order : {order}')
+                is_buy = False
+
+            # sell coin when price is lower than MA10
+            elif current_price < operation_helper(past_data[:10], 'tradePrice', 'mean'):
+                order = ub.sell_coin(coin)
+                logger.info(datetime.datetime.now().strftime(
+                    '%Y-%m-%d %H:%M:%S') + f' [SELL] coin : {coin}, upbit : {current_price}, order : {order}')
+                is_buy = False
+
+        else:
+            if operation_helper(past_data, 'candleAccTradeVolume', 'max') * 3 < current_data[
+                'candleAccTradeVolume'] and operation_helper(past_data, 'tradePrice', 'max') < current_price:
+                # buy coin from upbit
+                order = ub.buy_coin(coin)
+                logger.info(datetime.datetime.now().strftime(
+                    '%Y-%m-%d %H:%M:%S') + f' [BUY] coin : {coin}, upbit : {current_price}, order : {order}')
+                is_buy = current_price
+        time.sleep(1)
+        # print(f'time : {time.time() - start}')
+
 
 
 def operation_helper(data, target, operation):
@@ -83,15 +88,9 @@ def main():
     activated_coin = {}
 
 
-    while True:
-        start_time = time.time()
-        for coin in coins_list:
-            t = threading.Thread(target=threading_func, args=(coin, logger, kernel_size))
-            t.start()
-        time_taken = time.time() - start_time
-        print(f'time_taken : {time_taken}')
-
-
+    for coin in coins_list:
+        t = threading.Thread(target=threading_func, args=(coin, logger, kernel_size))
+        t.start()
 
 
 if __name__ == '__main__':
