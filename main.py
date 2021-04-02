@@ -1,21 +1,20 @@
 import logging
 import datetime
-import threading
+import asyncio
 import time
+import functools
 
 from src import official_api as ub
 from src.unofficial_api import get_ohlcv
 
-lock = threading.Lock()
-
-
-def threading_func(coin, logger, kernel_size):
+async def async_func(coin, logger, kernel_size, loop):
     is_buy = False
 
     while True:
-        # start = time.time()
+        # if coin == 'KRW-BTC':
+        #     start = time.time()
 
-        data = get_ohlcv(coin, kernel_size)
+        data = await loop.run_in_executor(None, functools.partial(get_ohlcv, coin, kernel_size))
 
         if data is None:
             continue
@@ -48,8 +47,8 @@ def threading_func(coin, logger, kernel_size):
                 logger.info(datetime.datetime.now().strftime(
                     '%Y-%m-%d %H:%M:%S') + f' [BUY] coin : {coin}, upbit : {current_price}, order : {order}')
                 is_buy = current_price
-        time.sleep(1)
-        # print(f'time : {time.time() - start}')
+        # if coin == 'KRW-BTC':
+        #     print(f'{coin} time : {time.time() - start}')
 
 
 
@@ -67,8 +66,7 @@ def operation_helper(data, target, operation):
     return output
 
 
-def main():
-    # How long?
+async def main(loop):
     kernel_size = 200
 
     # For logging file
@@ -87,11 +85,13 @@ def main():
     global activated_coin
     activated_coin = {}
 
-
-    for coin in coins_list:
-        t = threading.Thread(target=threading_func, args=(coin, logger, kernel_size))
-        t.start()
+    fts = [asyncio.ensure_future(async_func(coin, logger, kernel_size, loop)) for coin in coins_list]
+    r = await asyncio.gather(*fts)
+    global results
+    results = r
 
 
 if __name__ == '__main__':
-    main()
+    loop = asyncio.get_event_loop()  # 이벤트 루프를 얻음
+    loop.run_until_complete(main(loop))  # main이 끝날 때까지 기다림
+    loop.close()
