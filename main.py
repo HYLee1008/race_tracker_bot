@@ -26,7 +26,7 @@ async def async_func(coin, logger, kernel_size, loop):
 
         if is_buy:
             # sonjeol
-            if current_price < activated_coin[coin] * 0.95:
+            if current_price < is_buy * 0.99:
                 order = ub.sell_coin(coin)
                 logger.info(datetime.datetime.now().strftime(
                     '%Y-%m-%d %H:%M:%S') + f' [SELL] coin : {coin}, upbit : {current_price}, order : {order}')
