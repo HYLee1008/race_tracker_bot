@@ -18,8 +18,8 @@ async def get_ohlcv(url):
 async def async_func(coin, count, logger):
     is_buy = False
     while True:
-        if coin == 'KRW-BTC':
-            start = time.time()
+        # if coin == 'KRW-BTC':
+        #     start = time.time()
 
         data = await get_ohlcv(get_url_ohlcv(coin, count))
 
@@ -54,8 +54,8 @@ async def async_func(coin, count, logger):
                 logger.info(datetime.datetime.now().strftime(
                     '%Y-%m-%d %H:%M:%S') + f' [BUY] coin : {coin}, upbit : {current_price}, order : {order}')
                 is_buy = current_price
-        if coin == 'KRW-BTC':
-            print(f'{coin} time : {time.time() - start}')
+        # if coin == 'KRW-BTC':
+        #     print(f'{coin} time : {time.time() - start}')
 
 
 def operation_helper(data, target, operation):
