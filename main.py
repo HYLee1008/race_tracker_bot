@@ -91,5 +91,5 @@ if __name__ == "__main__":
 
     coins_list = ub.get_krw_tickers()
 
-
-    asyncio.run(main(coins_list, kernel_size, logger))
+    loop = asyncio.get_event_loop()          # 이벤트 루프를 얻음
+    loop.run_until_complete(main(coins_list, kernel_size, logger))          # main이 끝날 때까지 기다림
