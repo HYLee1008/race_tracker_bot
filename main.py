@@ -1,20 +1,27 @@
-import logging
-import datetime
 import asyncio
+import aiohttp
 import time
-import functools
-
+import datetime
+import logging
 from src import official_api as ub
-from src.unofficial_api import get_ohlcv
 
-async def async_func(coin, logger, kernel_size, loop):
+
+def get_url_ohlcv(coin, count):
+    return f'https://crix-api-endpoint.upbit.com/v1/crix/candles/minutes/1?code=CRIX.UPBIT.{coin}&count={count}'
+
+
+async def get_ohlcv(url):
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url) as res:
+            return await res.json()
+
+async def async_func(coin, count, logger):
     is_buy = False
-
     while True:
-        # if coin == 'KRW-BTC':
-        #     start = time.time()
+        if coin == 'KRW-BTC':
+            start = time.time()
 
-        data = await loop.run_in_executor(None, functools.partial(get_ohlcv, coin, kernel_size))
+        data = await get_ohlcv(get_url_ohlcv(coin, count))
 
         if data is None:
             continue
@@ -47,9 +54,8 @@ async def async_func(coin, logger, kernel_size, loop):
                 logger.info(datetime.datetime.now().strftime(
                     '%Y-%m-%d %H:%M:%S') + f' [BUY] coin : {coin}, upbit : {current_price}, order : {order}')
                 is_buy = current_price
-        # if coin == 'KRW-BTC':
-        #     print(f'{coin} time : {time.time() - start}')
-
+        if coin == 'KRW-BTC':
+            print(f'{coin} time : {time.time() - start}')
 
 
 def operation_helper(data, target, operation):
@@ -66,7 +72,11 @@ def operation_helper(data, target, operation):
     return output
 
 
-async def main(loop):
+async def main(coins_list, count, logger):
+    await asyncio.gather(*[async_func(coin, count, logger) for coin in coins_list])
+
+
+if __name__ == "__main__":
     kernel_size = 200
 
     # For logging file
@@ -81,17 +91,5 @@ async def main(loop):
 
     coins_list = ub.get_krw_tickers()
 
-    # Current wallet state, store buy price
-    global activated_coin
-    activated_coin = {}
 
-    fts = [asyncio.ensure_future(async_func(coin, logger, kernel_size, loop)) for coin in coins_list]
-    r = await asyncio.gather(*fts)
-    global results
-    results = r
-
-
-if __name__ == '__main__':
-    loop = asyncio.get_event_loop()  # 이벤트 루프를 얻음
-    loop.run_until_complete(main(loop))  # main이 끝날 때까지 기다림
-    loop.close()
+    asyncio.run(main(coins_list, kernel_size, logger))

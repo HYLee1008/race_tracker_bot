@@ -13,7 +13,7 @@ History
 - 2021-03-27 : Version 2 생성. 비공식 API를 사용하여 속도 향상. Thread 사용.
 - 2021-03-30 : Out of memory로 인해 VM 멈춤 현상 발견. WinError 10048 발생. 너무 자주 request를 보내서 생기는 오류인것 같다.
 - 2021-04-01 : sleep을 사용해도 같은 error 발생. url을 읽을 때, poolManager를 이용해 문제해결
-- 2021-04-02 : 여전히 같은 error 발생. async로 다시 시도해봄. 
+- 2021-04-02 : 여전히 같은 error 발생. aiohttp로 다시 시도. 
 
 Description
 ----------
