@@ -18,8 +18,8 @@ async def get_ohlcv(url):
 async def async_func(coin, count, logger):
     is_buy = False
     while True:
-        if coin == 'KRW-BTC':
-            start = time.time()
+        # if coin == 'KRW-BTC':
+        #     start = time.time()
 
         data = await get_ohlcv(get_url_ohlcv(coin, count))
 
@@ -54,8 +54,8 @@ async def async_func(coin, count, logger):
                 logger.info(datetime.datetime.now().strftime(
                     '%Y-%m-%d %H:%M:%S') + f' [BUY] coin : {coin}, upbit : {current_price}, order : {order}')
                 is_buy = current_price
-        if coin == 'KRW-BTC':
-            print(f'{coin} time : {time.time() - start}')
+        # if coin == 'KRW-BTC':
+        #     print(f'{coin} time : {time.time() - start}')
 
 
 def operation_helper(data, target, operation):
@@ -91,5 +91,5 @@ if __name__ == "__main__":
 
     coins_list = ub.get_krw_tickers()
 
-
-    asyncio.run(main(coins_list, kernel_size, logger))
+    loop = asyncio.get_event_loop()          # 이벤트 루프를 얻음
+    loop.run_until_complete(main(coins_list, kernel_size, logger))          # main이 끝날 때까지 기다림
