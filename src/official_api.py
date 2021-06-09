@@ -1,8 +1,8 @@
 import pyupbit
 
 
-access_key = 'XS5bMcecpljFvMJcQJxBkIK3a64Xw8VwQxcdrZWT'
-secret_key = '5M6DE5VRKUzFM237jVDFZcAQdVsPaZxrSzNXURbL'
+access_key = 'type your own access_key'
+secret_key = 'type your own secret_key'
 
 
 # get KRW tickers
